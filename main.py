@@ -11,6 +11,7 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # set pytorch device for computation
+print(device) # just to make sure it uses what it have to
 
 def main():
     """
