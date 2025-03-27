@@ -99,7 +99,9 @@ class DataSampler(Sampler):
                 batch_feedbacks = torch.from_numpy(group_feedbacks[idxlist[start_idx:end_idx]])
 
                 # here, we generate negative items for each interaction in the batch
+                batch_users = batch_users.cpu().numpy() if isinstance(batch_users, torch.Tensor) else batch_users
                 batch_user_item_matrix = self.user_item_matrix[batch_users].toarray()  # this is the portion of the
+                batch_users = torch.tensor(batch_users)
                 # user-item matrix for the users in the batch
                 batch_user_unseen_items = 1 - batch_user_item_matrix  # this matrix contains the items that each user
                 # in the batch has never seen
