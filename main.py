@@ -86,6 +86,14 @@ def main():
         raw_dataset = pd.read_csv("datasets/amazon-movies-tv/movies_tv.csv")
     if init_args.dataset == "amazon_electronics":
         raw_dataset = pd.read_csv("datasets/amazon-electronics/electronics.csv")
+    if init_args.dataset == "movielens_1m":
+        raw_dataset = pd.read_csv("datasets/movielens-1m/output.csv")
+    if init_args.dataset == "movielens_10m":
+        raw_dataset = pd.read_csv("datasets/movielens-10m/output.csv")
+    if init_args.dataset == "movielens_20m":
+        raw_dataset = pd.read_csv("datasets/movielens-20m/output.csv")
+    if init_args.dataset == "netflix":
+        raw_dataset = pd.read_csv("datasets/netflix/output.csv")
 
     # create train, validation, and test sets
     dataset = Dataset(raw_dataset)
