@@ -89,9 +89,9 @@ def main():
     if init_args.dataset == "movielens_1m":
         raw_dataset = pd.read_csv("datasets/movielens-1m/ratings_mapped.csv")
     if init_args.dataset == "movielens_10m":
-        raw_dataset = pd.read_csv("datasets/movielens-10m/output.csv")
+        raw_dataset = pd.read_csv("datasets/movielens-10m/ratings_mapped.csv")
     if init_args.dataset == "movielens_20m":
-        raw_dataset = pd.read_csv("datasets/movielens-20m/output.csv")
+        raw_dataset = pd.read_csv("datasets/movielens-20m/ratings_mapped.csv")
     if init_args.dataset == "netflix":
         raw_dataset = pd.read_csv("datasets/netflix/output.csv")
 
