@@ -53,6 +53,128 @@ class Metrics(object):
             except AttributeError:
                 logger.warning("Skipped unknown metric '%s'.", metric)
         return results
+    
+    @staticmethod
+    def _get_top_k_items(pred_scores, k):
+        """Pobiera indeksy top-k rekomendowanych elementów dla każdego użytkownika."""
+        relevant_indices = bn.argpartition(-pred_scores, k - 1, axis=1)[:, :k]
+        return relevant_indices
+
+    @staticmethod
+    def _get_relevant_items_for_user(ground_truth_row):
+        """Pobiera listę indeksów relewantnych elementów dla danego użytkownika."""
+        return np.where(ground_truth_row > 0)[0].tolist()
+
+    @staticmethod
+    def _get_recommended_items_for_user(pred_scores_row, k):
+        """Pobiera listę indeksów top-k rekomendowanych elementów dla danego użytkownika."""
+        top_k_indices = np.argsort(-pred_scores_row)[:k].tolist()
+        return top_k_indices
+
+    @staticmethod
+    def mean_precision_at_k(pred_scores, ground_truth, k=5):
+        """
+        Zmodyfikowana wersja mean_precision_at_k przyjmująca macierze wyników i ground truth.
+        """
+        if pred_scores.shape[0] != ground_truth.shape[0]:
+            raise ValueError("Liczba wierszy w pred_scores musi być równa liczbie wierszy w ground_truth.")
+
+        precision_scores = []
+        for user_idx in range(pred_scores.shape[0]):
+            recommended_indices = Metrics._get_recommended_items_for_user(pred_scores[user_idx], k)
+            relevant_indices = Metrics._get_relevant_items_for_user(ground_truth[user_idx])
+
+            top_k_recommended = recommended_indices[:k]
+            relevant_in_top_k = [item for item in top_k_recommended if item in relevant_indices]
+
+            if len(top_k_recommended) > 0:
+                precision = len(relevant_in_top_k) / len(top_k_recommended)
+            else:
+                precision = 0.0
+            precision_scores.append(precision)
+
+        return np.mean(precision_scores)
+
+    @staticmethod
+    def mean_recall_at_k(pred_scores, ground_truth, k=5):
+        """
+        Zmodyfikowana wersja mean_recall_at_k przyjmująca macierze wyników i ground truth.
+        """
+        if pred_scores.shape[0] != ground_truth.shape[0]:
+            raise ValueError("Liczba wierszy w pred_scores musi być równa liczbie wierszy w ground_truth.")
+
+        recall_scores = []
+        for user_idx in range(pred_scores.shape[0]):
+            recommended_indices = Metrics._get_recommended_items_for_user(pred_scores[user_idx], k)
+            relevant_indices = Metrics._get_relevant_items_for_user(ground_truth[user_idx])
+
+            top_k_recommended = recommended_indices[:k]
+            relevant_in_top_k = [item for item in top_k_recommended if item in relevant_indices]
+
+            if len(relevant_indices) > 0:
+                recall = len(relevant_in_top_k) / len(relevant_indices)
+            else:
+                recall = 0.0
+            recall_scores.append(recall)
+
+        return np.mean(recall_scores)
+
+    @staticmethod
+    def mean_average_precision_at_k(pred_scores, ground_truth, k=5):
+        """
+        Zmodyfikowana wersja mean_average_precision_at_k przyjmująca macierze wyników i ground truth.
+        """
+        if pred_scores.shape[0] != ground_truth.shape[0]:
+            raise ValueError("Liczba wierszy w pred_scores musi być równa liczbie wierszy w ground_truth.")
+
+        apk_scores = []
+        for user_idx in range(pred_scores.shape[0]):
+            recommended_indices = Metrics._get_recommended_items_for_user(pred_scores[user_idx], k)
+            relevant_indices = Metrics._get_relevant_items_for_user(ground_truth[user_idx])
+
+            relevant_in_top_k = [(i + 1, item) for i, item in enumerate(recommended_indices[:k]) if item in relevant_indices]
+
+            if not relevant_indices:
+                apk = 0.0
+            elif not relevant_in_top_k:
+                apk = 0.0
+            else:
+                precision_sum = 0.0
+                for rank, item in relevant_in_top_k:
+                    top_n = recommended_indices[:rank]
+                    relevant_at_rank = [r for r in top_n if r in relevant_indices]
+                    precision_at_rank = len(relevant_at_rank) / len(top_n) if len(top_n) > 0 else 0.0
+                    precision_sum += precision_at_rank
+                apk = precision_sum / len(relevant_indices)
+            apk_scores.append(apk)
+
+        return np.mean(apk_scores)
+
+    @staticmethod
+    def position_aware_recall_at_k(pred_scores, ground_truth, k=100):
+        assert pred_scores.shape == ground_truth.shape, \
+            "'pred_scores' and 'ground_truth' must have the same shape."
+        k = min(pred_scores.shape[1], k)
+        n_users = pred_scores.shape[0]
+        position_aware_recall_scores = []
+
+        for user_idx in range(n_users):
+            relevant_indices = np.where(ground_truth[user_idx] > 0)[0]
+            if not relevant_indices.size:
+                position_aware_recall_scores.append(0.0)
+                continue
+
+            ranked_predictions = np.argsort(-pred_scores[user_idx])[:k]
+            hit_positions = []
+            for i, pred_index in enumerate(ranked_predictions):
+                if pred_index in relevant_indices:
+                    hit_positions.append(i + 1)
+
+            position_reward = sum(1.0 / pos for pos in hit_positions) if hit_positions else 0.0
+            position_aware_recall = position_reward / len(relevant_indices) if relevant_indices.size > 0 else 0.0
+            position_aware_recall_scores.append(position_aware_recall)
+
+        return np.array(position_aware_recall_scores)
 
     @staticmethod
     def ndcg_at_k(pred_scores, ground_truth, k=100):

@@ -101,6 +101,9 @@ class NCR(torch.nn.Module):
         :return: the event vector that is the negation of the input event vector.
         """
         # ReLU is the activation function selected in the paper
+        if vector.dtype != self.not_layer_1.weight.dtype:
+            print(f"vector.dt={vector.dtype}, not_layer.dt={self.not_layer_1.weight.dtype}")
+            vector = vector.to(self.not_layer_1.weight.dtype)
         vector = F.relu(self.not_layer_1(vector))
         if self.training:
             vector = self.dropout_layer(vector)

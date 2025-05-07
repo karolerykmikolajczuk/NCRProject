@@ -57,7 +57,7 @@ def main():
                              help='Weight for the logical regularization.')
     init_parser.add_argument('--val_metric', type=str, default='ndcg@5',
                              help='Metric computed for the validation of the model.')
-    init_parser.add_argument('--test_metrics', type=list, default=['ndcg@5', 'ndcg@10', 'hit@5', 'hit@10'],
+    init_parser.add_argument('--test_metrics', type=list, default=['ndcg@5', 'ndcg@10', 'recall@3', 'recall@15', 'hit@5', 'hit@10', 'position_aware_recall@5', 'position_aware_recall@10'], #, 'mean_precision@5', 'mean_precision@10', 'mean_recall@5', 'mean_recall@10', 'mean_average_precision@5', 'mean_average_precision@10'
                              help='Metrics computed for the test of the model.')
     init_parser.add_argument('--n_epochs', type=int, default=100,
                              help='Number of epochs for the training of the model.')
